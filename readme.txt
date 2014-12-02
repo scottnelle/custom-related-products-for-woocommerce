@@ -7,7 +7,7 @@ Stable tag: 1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Custom Related Products for WooCommerce lets you choose which products should show in the related products area on a product detail page instead of simply showing products from the same category. Compatible with WooCommerce 2.1+
+Custom Related Products for WooCommerce lets you choose which products should show in the related products area on a product detail page.
 
 == Description ==
 
@@ -18,6 +18,8 @@ How to use:
 * Select some products and save.
 * As long as your theme has a related products section, you're done! By default all WooCommerce themes have this, so unless your theme specifically disables it you're all set.
 * If you don't select related products for any product, it will fall back to the WooCommerce default behavior of selecting random products by category. If you'd prefer to show no products you can configure that under WooCommerce > Custom Related Products.
+
+This plugin is compatible with WooCommerce 2.1+
 
 == Installation ==
 
