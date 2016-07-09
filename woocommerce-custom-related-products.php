@@ -2,7 +2,7 @@
 /*
 Plugin Name: Custom Related Products for WooCommerce
 Description: Select your own related products instead of pulling them in by category.
-Version:     1.1
+Version:     1.2
 Plugin URI:  http://scottnelle.com
 Author:      Scott Nelle
 Author URI:  http://scottnelle.com
@@ -14,13 +14,15 @@ function crp_select_related_products() {
 	$product_ids = array_filter( array_map( 'absint', (array) get_post_meta( $post->ID, '_related_ids', true ) ) );
 	?>
 	<div class="options_group">
-		<?php if ( $woocommerce->version >= '2.3' ) : ?> 
+		<?php if ( $woocommerce->version >= '2.3' ) : ?>
 			<p class="form-field"><label for="related_ids"><?php _e( 'Related Products', 'woocommerce' ); ?></label>
 				<input type="hidden" class="wc-product-search" style="width: 50%;" id="related_ids" name="related_ids" data-placeholder="<?php _e( 'Search for a product&hellip;', 'woocommerce' ); ?>" data-action="woocommerce_json_search_products" data-multiple="true" data-selected="<?php
 					$json_ids = array();
 					foreach ( $product_ids as $product_id ) {
 						$product = wc_get_product( $product_id );
-						$json_ids[ $product_id ] = wp_kses_post( $product->get_formatted_name() );
+						if ( is_object( $product ) && is_callable( array( $product, 'get_formatted_name' ) ) ) {
+							$json_ids[ $product_id ] = wp_kses_post( $product->get_formatted_name() );
+						}
 					}
 
 					echo esc_attr( json_encode( $json_ids ) );
@@ -91,7 +93,7 @@ add_action('admin_menu', 'crp_create_menu', 99);
 function crp_settings_page() {
 	if ( isset($_POST['submit_custom_related_products']) && current_user_can('manage_options') ) {
 		check_admin_referer( 'custom_related_products', '_custom_related_products_nonce' );
-		
+
 		// save settings
 		if (isset($_POST['crp_empty_behavior']) && $_POST['crp_empty_behavior'] != '') {
 			update_option( 'crp_empty_behavior', $_POST['crp_empty_behavior'] );
@@ -112,7 +114,7 @@ function crp_settings_page() {
 	echo '
 		<form method="post" action="admin.php?page=custom_related_products">
 			'.wp_nonce_field( 'custom_related_products', '_custom_related_products_nonce', true, false ).'
-			<p>If I have not selected related products: 
+			<p>If I have not selected related products:
 				<select name="crp_empty_behavior">
 					<option value="">Select random related products by category</option>
 					<option value="none" '.$behavior_none_selected.'>Don&rsquo;t show any related products</option>
