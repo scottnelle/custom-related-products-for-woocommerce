@@ -8,6 +8,41 @@ Author:      Scott Nelle
 Author URI:  http://scottnelle.com
 */
 
+/**
+ * Force related products to show if some have been selected.
+ * This is required for WooCommerce 3.0, which will not display products if
+ * There are no categories or tags.
+ *
+ * @param bool $result Whether or not we should force related posts to display.
+ * @param int $product_id The ID of the current product.
+ *
+ * @return bool Modified value - should we force related products to display?
+ */
+function crp_force_display( $result, $product_id ) {
+	return empty( get_post_meta( $product_id, '_related_ids', true ) ) ? $result : true;
+}
+add_filter( 'woocommerce_product_related_posts_force_display', 'crp_force_display', 10, 2 );
+
+/**
+ * Determine whether we want to consider taxonomy terms when selecting related products.
+ * This is required for WooCommerce 3.0.
+ *
+ * @param bool $result Whether or not we should consider tax terms during selection.
+ * @param int $product_id The ID of the current product.
+ *
+ * @return bool Modified value - should we consider tax terms during selection?
+ */
+function crp_taxonomy_relation( $result, $product_id ) {
+	$related_ids = get_post_meta( $product_id, '_related_ids', true );
+	if ( ! empty( $related_ids ) ) {
+		return false;
+	} else {
+		return 'none' === get_option( 'crp_empty_behavior' ) ? false : $result;
+	}
+}
+add_filter( 'woocommerce_product_related_posts_relate_by_category', 'crp_taxonomy_relation', 10, 2 );
+add_filter( 'woocommerce_product_related_posts_relate_by_tag', 'crp_taxonomy_relation', 10, 2 );
+
 // add related products selector to product edit screen
 function crp_select_related_products() {
 	global $post, $woocommerce;
@@ -68,8 +103,15 @@ function crp_save_related_products( $post_id, $post ) {
 }
 add_action( 'woocommerce_process_product_meta', 'crp_save_related_products', 10, 2 );
 
-// filter the arguments of the related products query to match those selected, if any
-function crp_filter_related_products($args) {
+/**
+ * Filter the related product query args.
+ * This function works for WooCommerce prior to 3.0.
+ *
+ * @param array $args Query arguments.
+ *
+ * @param array Modified query arguments.
+ */
+function crp_filter_related_products_legacy( $args ) {
 	global $post;
 	$related = get_post_meta( $post->ID, '_related_ids', true );
 	if ($related) { // remove category based filtering
@@ -81,7 +123,26 @@ function crp_filter_related_products($args) {
 
 	return $args;
 }
-add_filter( 'woocommerce_related_products_args', 'crp_filter_related_products' );
+add_filter( 'woocommerce_related_products_args', 'crp_filter_related_products_legacy' );
+
+/**
+ * Filter the related product query args.
+ *
+ * @param array $query Query arguments.
+ * @param int $product_id The ID of the current product.
+ *
+ * @return array Modified query arguments.
+ */
+function crp_filter_related_products( $query, $product_id ) {
+	$related_ids = get_post_meta( $product_id, '_related_ids', true );
+	if ( ! empty( $related_ids ) && is_array( $related_ids ) ) {
+		$related_ids = implode( ',', array_map( 'absint', $related_ids ) );
+		$query['where'] .= " AND p.ID IN ( {$related_ids} )";
+	}
+	return $query;
+}
+add_filter( 'woocommerce_product_related_posts_query', 'crp_filter_related_products', 20, 2 );
+
 
 // create the menu item
 function crp_create_menu() {
@@ -126,15 +187,6 @@ function crp_settings_page() {
 		</form>
 	';
 	?>
-
-		<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-			<input type="hidden" name="cmd" value="_s-xclick">
-			<input type="hidden" name="hosted_button_id" value="TNF7SKVWY3AMY">
-			<p>Love this plugin? Feeling generous? <br />
-				<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-			</p>
-			<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-		</form>
 	</div>
 
 	<?php
