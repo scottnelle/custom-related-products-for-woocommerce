@@ -19,7 +19,8 @@ Author URI:  http://scottnelle.com
  * @return bool Modified value - should we force related products to display?
  */
 function crp_force_display( $result, $product_id ) {
-	return empty( get_post_meta( $product_id, '_related_ids', true ) ) ? $result : true;
+	$related_ids = get_post_meta( $product_id, '_related_ids', true );
+	return empty( $related_ids ) ? $result : true;
 }
 add_filter( 'woocommerce_product_related_posts_force_display', 'crp_force_display', 10, 2 );
 
