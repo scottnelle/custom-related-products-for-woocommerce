@@ -2,7 +2,7 @@
 /*
 Plugin Name: Custom Related Products for WooCommerce
 Description: Select your own related products instead of pulling them in by category.
-Version:     1.2
+Version:     1.3
 Plugin URI:  http://scottnelle.com
 Author:      Scott Nelle
 Author URI:  http://scottnelle.com
@@ -43,13 +43,29 @@ function crp_taxonomy_relation( $result, $product_id ) {
 add_filter( 'woocommerce_product_related_posts_relate_by_category', 'crp_taxonomy_relation', 10, 2 );
 add_filter( 'woocommerce_product_related_posts_relate_by_tag', 'crp_taxonomy_relation', 10, 2 );
 
-// add related products selector to product edit screen
+/**
+ * Add related products selector to product edit screen
+ */
 function crp_select_related_products() {
 	global $post, $woocommerce;
 	$product_ids = array_filter( array_map( 'absint', (array) get_post_meta( $post->ID, '_related_ids', true ) ) );
 	?>
 	<div class="options_group">
-		<?php if ( $woocommerce->version >= '2.3' ) : ?>
+		<?php if ( $woocommerce->version >= '3.0' ) : ?>
+			<p class="form-field">
+				<label for="related_ids"><?php _e( 'Related Products', 'woocommerce' ); ?></label>
+				<select class="wc-product-search" multiple="multiple" style="width: 50%;" id="related_ids" name="related_ids[]" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'woocommerce' ); ?>" data-action="woocommerce_json_search_products_and_variations" data-exclude="<?php echo intval( $post->ID ); ?>">
+					<?php
+						foreach ( $product_ids as $product_id ) {
+							$product = wc_get_product( $product_id );
+							if ( is_object( $product ) ) {
+								echo '<option value="' . esc_attr( $product_id ) . '"' . selected( true, true, false ) . '>' . wp_kses_post( $product->get_formatted_name() ) . '</option>';
+							}
+						}
+					?>
+				</select> <?php echo wc_help_tip( __( 'Related products are displayed on the product detail page.', 'woocommerce' ) ); ?>
+			</p>
+		<?php elseif ( $woocommerce->version >= '2.3' ) : ?>
 			<p class="form-field"><label for="related_ids"><?php _e( 'Related Products', 'woocommerce' ); ?></label>
 				<input type="hidden" class="wc-product-search" style="width: 50%;" id="related_ids" name="related_ids" data-placeholder="<?php _e( 'Search for a product&hellip;', 'woocommerce' ); ?>" data-action="woocommerce_json_search_products" data-multiple="true" data-selected="<?php
 					$json_ids = array();
@@ -83,17 +99,24 @@ function crp_select_related_products() {
 }
 add_action('woocommerce_product_options_related', 'crp_select_related_products');
 
-// save related products selector on product edit screen
+/**
+ * Save related products selector on product edit screen.
+ *
+ * @param int $post_id ID of the post to save.
+ * @param obj WP_Post object.
+ */
 function crp_save_related_products( $post_id, $post ) {
 	global $woocommerce;
 	if ( isset( $_POST['related_ids'] ) ) {
-		if ( $woocommerce->version >= '2.3' ) {
+		// From 2.3 until the release before 3.0 Woocommerce posted these as a comma-separated string.
+		// Before and after, they are posted as an array of IDs.
+		if ( $woocommerce->version >= '2.3' && $woocommerce->version < '3.0' ) {
 		$related = isset( $_POST['related_ids'] ) ? array_filter( array_map( 'intval', explode( ',', $_POST['related_ids'] ) ) ) : array();
 		} else {
 			$related = array();
 			$ids = $_POST['related_ids'];
 			foreach ( $ids as $id ) {
-				if ( $id && $id > 0 ) { $related[] = $id; }
+				if ( $id && $id > 0 ) { $related[] = absint( $id ); }
 			}
 		}
 		update_post_meta( $post_id, '_related_ids', $related );
@@ -109,7 +132,7 @@ add_action( 'woocommerce_process_product_meta', 'crp_save_related_products', 10,
  *
  * @param array $args Query arguments.
  *
- * @param array Modified query arguments.
+ * @return array Modified query arguments.
  */
 function crp_filter_related_products_legacy( $args ) {
 	global $post;
@@ -144,13 +167,17 @@ function crp_filter_related_products( $query, $product_id ) {
 add_filter( 'woocommerce_product_related_posts_query', 'crp_filter_related_products', 20, 2 );
 
 
-// create the menu item
+/**
+ * Create the menu item.
+ */
 function crp_create_menu() {
 	add_submenu_page( 'woocommerce', 'Custom Related Products', 'Custom Related Products', 'manage_options', 'custom_related_products', 'crp_settings_page');
 }
 add_action('admin_menu', 'crp_create_menu', 99);
 
-// create the settings page
+/**
+ * Create the settings page.
+ */
 function crp_settings_page() {
 	if ( isset($_POST['submit_custom_related_products']) && current_user_can('manage_options') ) {
 		check_admin_referer( 'custom_related_products', '_custom_related_products_nonce' );
