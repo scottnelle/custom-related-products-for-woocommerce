@@ -1,5 +1,6 @@
 === Custom Related Products for WooCommerce ===
 Contributors: scottnelle
+Donate link: https://www.paypal.me/scottnelle
 Tags: woocommerce, related products
 Requires at least: 3.0
 Tested up to: 4.5
@@ -24,7 +25,7 @@ This plugin has been tested with WooCommerce 2.1 through 2.6.
 
 == Installation ==
 
-1. Custom Related Products for WooCommerce
+1. Download Custom Related Products for WooCommerce.
 1. Activate the plugin through the 'Plugins' menu in WordPress
 1. Configure under WooCommerce > Custom Related Products
 
