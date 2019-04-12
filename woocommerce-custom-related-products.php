@@ -160,7 +160,10 @@ add_filter( 'woocommerce_related_products_args', 'crp_filter_related_products_le
 function crp_filter_related_products( $query, $product_id ) {
 	$related_ids = get_post_meta( $product_id, '_related_ids', true );
 	if ( ! empty( $related_ids ) && is_array( $related_ids ) ) {
-		$related_ids = implode( ',', array_map( 'absint', $related_ids ) );
+		foreach ($related_ids as $key => $related_id) {
+			$related_ids[$key] = apply_filters('wpml_object_id', absint($related_id), 'product');
+		}
+		$related_ids = implode( ',', $related_ids );
 		$query['where'] .= " AND p.ID IN ( {$related_ids} )";
 	}
 	return $query;
