@@ -2,8 +2,8 @@
 /*
 Plugin Name: Custom Related Products for WooCommerce
 Description: Select your own related products instead of pulling them in by category.
-Version:     1.3
-Plugin URI:  http://scottnelle.com
+Version:     1.4
+Plugin URI:  https://wordpress.org/plugins/custom-related-products-for-woocommerce/
 Author:      Scott Nelle
 Author URI:  http://scottnelle.com
 */
@@ -52,7 +52,7 @@ function crp_select_related_products() {
 	$product_ids = array_filter( array_map( 'absint', (array) get_post_meta( $post->ID, '_related_ids', true ) ) );
 	?>
 	<div class="options_group">
-		<?php if ( $woocommerce->version >= '3.0' ) : ?>
+		<?php if ( version_compare( $woocommerce->version, '3.0', '>=' ) ) : ?>
 			<p class="form-field">
 				<label for="related_ids"><?php _e( 'Related Products', 'woocommerce' ); ?></label>
 				<select class="wc-product-search" multiple="multiple" style="width: 50%;" id="related_ids" name="related_ids[]" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'woocommerce' ); ?>" data-action="woocommerce_json_search_products_and_variations" data-exclude="<?php echo intval( $post->ID ); ?>">
@@ -66,7 +66,7 @@ function crp_select_related_products() {
 					?>
 				</select> <?php echo wc_help_tip( __( 'Related products are displayed on the product detail page.', 'woocommerce' ) ); ?>
 			</p>
-		<?php elseif ( $woocommerce->version >= '2.3' ) : ?>
+		<?php elseif ( version_compare( $woocommerce->version, '2.3', '>=' ) ) : ?>
 			<p class="form-field"><label for="related_ids"><?php _e( 'Related Products', 'woocommerce' ); ?></label>
 				<input type="hidden" class="wc-product-search" style="width: 50%;" id="related_ids" name="related_ids" data-placeholder="<?php _e( 'Search for a product&hellip;', 'woocommerce' ); ?>" data-action="woocommerce_json_search_products" data-multiple="true" data-selected="<?php
 					$json_ids = array();
@@ -80,7 +80,7 @@ function crp_select_related_products() {
 					echo esc_attr( json_encode( $json_ids ) );
 				?>" value="<?php echo implode( ',', array_keys( $json_ids ) ); ?>" /> <img class="help_tip" data-tip='<?php _e( 'Related products are displayed on the product detail page.', 'woocommerce' ) ?>' src="<?php echo WC()->plugin_url(); ?>/assets/images/help.png" height="16" width="16" />
 			</p>
-		<?php else: ?>
+		<?php else : ?>
 			<p class="form-field"><label for="related_ids"><?php _e( 'Related Products', 'woocommerce' ); ?></label>
 				<select id="related_ids" name="related_ids[]" class="ajax_chosen_select_products" multiple="multiple" data-placeholder="<?php _e( 'Search for a product&hellip;', 'woocommerce' ); ?>">
 					<?php
@@ -111,7 +111,7 @@ function crp_save_related_products( $post_id, $post ) {
 	if ( isset( $_POST['related_ids'] ) ) {
 		// From 2.3 until the release before 3.0 Woocommerce posted these as a comma-separated string.
 		// Before and after, they are posted as an array of IDs.
-		if ( $woocommerce->version >= '2.3' && $woocommerce->version < '3.0' ) {
+		if ( version_compare( $woocommerce->version, '2.3', '>=' ) && version_compare( $woocommerce->version, '3.0', '<' ) ) {
 		$related = isset( $_POST['related_ids'] ) ? array_filter( array_map( 'intval', explode( ',', $_POST['related_ids'] ) ) ) : array();
 		} else {
 			$related = array();
